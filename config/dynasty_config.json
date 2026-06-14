@@ -1,0 +1,63 @@
+{
+  "dynasties": [
+    {
+      "name": "先秦",
+      "start_year": -770,
+      "end_year": -221,
+      "order": 1
+    },
+    {
+      "name": "秦",
+      "start_year": -221,
+      "end_year": -206,
+      "order": 2
+    },
+    {
+      "name": "汉",
+      "start_year": -206,
+      "end_year": 220,
+      "order": 3
+    },
+    {
+      "name": "魏晋南北朝",
+      "start_year": 220,
+      "end_year": 589,
+      "order": 4
+    },
+    {
+      "name": "隋唐",
+      "start_year": 581,
+      "end_year": 907,
+      "order": 5
+    },
+    {
+      "name": "宋",
+      "start_year": 960,
+      "end_year": 1279,
+      "order": 6
+    },
+    {
+      "name": "元",
+      "start_year": 1271,
+      "end_year": 1368,
+      "order": 7
+    },
+    {
+      "name": "明",
+      "start_year": 1368,
+      "end_year": 1644,
+      "order": 8
+    },
+    {
+      "name": "清",
+      "start_year": 1644,
+      "end_year": 1912,
+      "order": 9
+    }
+  ],
+  "unknown_dynasty_name": "未知",
+  "file_patterns": {
+    "dynasty_extract_regex": "^(先秦|秦|汉|魏晋南北朝|隋唐|宋|元|明|清)_",
+    "file_extension": ".txt"
+  }
+}
