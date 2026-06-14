@@ -1,0 +1,181 @@
+{
+  "regions": [
+    {
+      "name": "北京",
+      "area": "华北",
+      "order": 1
+    },
+    {
+      "name": "天津",
+      "area": "华北",
+      "order": 2
+    },
+    {
+      "name": "河北",
+      "area": "华北",
+      "order": 3
+    },
+    {
+      "name": "山西",
+      "area": "华北",
+      "order": 4
+    },
+    {
+      "name": "内蒙古",
+      "area": "华北",
+      "order": 5
+    },
+    {
+      "name": "辽宁",
+      "area": "东北",
+      "order": 6
+    },
+    {
+      "name": "吉林",
+      "area": "东北",
+      "order": 7
+    },
+    {
+      "name": "黑龙江",
+      "area": "东北",
+      "order": 8
+    },
+    {
+      "name": "上海",
+      "area": "华东",
+      "order": 9
+    },
+    {
+      "name": "江苏",
+      "area": "华东",
+      "order": 10
+    },
+    {
+      "name": "浙江",
+      "area": "华东",
+      "order": 11
+    },
+    {
+      "name": "安徽",
+      "area": "华东",
+      "order": 12
+    },
+    {
+      "name": "福建",
+      "area": "华东",
+      "order": 13
+    },
+    {
+      "name": "江西",
+      "area": "华东",
+      "order": 14
+    },
+    {
+      "name": "山东",
+      "area": "华东",
+      "order": 15
+    },
+    {
+      "name": "河南",
+      "area": "中南",
+      "order": 16
+    },
+    {
+      "name": "湖北",
+      "area": "中南",
+      "order": 17
+    },
+    {
+      "name": "湖南",
+      "area": "中南",
+      "order": 18
+    },
+    {
+      "name": "广东",
+      "area": "中南",
+      "order": 19
+    },
+    {
+      "name": "广西",
+      "area": "中南",
+      "order": 20
+    },
+    {
+      "name": "海南",
+      "area": "中南",
+      "order": 21
+    },
+    {
+      "name": "重庆",
+      "area": "西南",
+      "order": 22
+    },
+    {
+      "name": "四川",
+      "area": "西南",
+      "order": 23
+    },
+    {
+      "name": "贵州",
+      "area": "西南",
+      "order": 24
+    },
+    {
+      "name": "云南",
+      "area": "西南",
+      "order": 25
+    },
+    {
+      "name": "西藏",
+      "area": "西南",
+      "order": 26
+    },
+    {
+      "name": "陕西",
+      "area": "西北",
+      "order": 27
+    },
+    {
+      "name": "甘肃",
+      "area": "西北",
+      "order": 28
+    },
+    {
+      "name": "青海",
+      "area": "西北",
+      "order": 29
+    },
+    {
+      "name": "宁夏",
+      "area": "西北",
+      "order": 30
+    },
+    {
+      "name": "新疆",
+      "area": "西北",
+      "order": 31
+    },
+    {
+      "name": "台湾",
+      "area": "华东",
+      "order": 32
+    },
+    {
+      "name": "香港",
+      "area": "中南",
+      "order": 33
+    },
+    {
+      "name": "澳门",
+      "area": "中南",
+      "order": 34
+    }
+  ],
+  "areas": ["华北", "东北", "华东", "中南", "西南", "西北"],
+  "unknown_region_name": "未知",
+  "file_patterns": {
+    "region_extract_regex": "^(先秦|秦|汉|魏晋南北朝|隋唐|宋|元|明|清)_([^_]+)_(.+)$",
+    "legacy_extract_regex": "^(先秦|秦|汉|魏晋南北朝|隋唐|宋|元|明|清)_(.+)$",
+    "file_extension": ".txt"
+  }
+}

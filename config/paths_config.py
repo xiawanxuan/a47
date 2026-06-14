@@ -14,6 +14,7 @@ FIGURES_OUTPUT_DIR = os.path.join(OUTPUT_DIR, "figures")
 CONFIG_DIR = os.path.join(BASE_DIR, "config")
 VARIANT_CHARS_FILE = os.path.join(CONFIG_DIR, "variant_chars.csv")
 DYNASTY_CONFIG_FILE = os.path.join(CONFIG_DIR, "dynasty_config.json")
+REGION_CONFIG_FILE = os.path.join(CONFIG_DIR, "region_config.json")
 
 FREQUENCY_CACHE_FILE = os.path.join(PROCESSED_DATA_DIR, "frequency_cache.pkl")
 CLEANED_CACHE_DIR = os.path.join(PROCESSED_DATA_DIR, "cleaned")

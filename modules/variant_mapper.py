@@ -15,6 +15,7 @@ class VariantCharMapper:
         if not os.path.exists(self.csv_path):
             raise FileNotFoundError(f"异体字对照表不存在: {self.csv_path}")
 
+        all_rows = []
         with open(self.csv_path, "r", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -26,13 +27,28 @@ class VariantCharMapper:
                     continue
 
                 variants = [v.strip() for v in variants_str.split("|") if v.strip()]
+                all_rows.append((standard, variants, category))
 
-                self.standard_to_variants[standard] = variants
-                self.standard_category[standard] = category
+        for standard, variants, category in all_rows:
+            self.standard_to_variants[standard] = []
+            self.standard_category[standard] = category
+            self.variant_to_standard[standard] = standard
 
-                self.variant_to_standard[standard] = standard
-                for v in variants:
-                    self.variant_to_standard[v] = standard
+        for standard, variants, category in all_rows:
+            valid_variants = []
+            for v in variants:
+                if v == standard:
+                    continue
+                if v in self.standard_to_variants:
+                    continue
+                if v in self.variant_to_standard and self.variant_to_standard[v] != standard:
+                    prev_std = self.variant_to_standard[v]
+                    if prev_std in self.standard_to_variants:
+                        if v in self.standard_to_variants[prev_std]:
+                            self.standard_to_variants[prev_std].remove(v)
+                self.variant_to_standard[v] = standard
+                valid_variants.append(v)
+            self.standard_to_variants[standard] = valid_variants
 
     def to_standard(self, char: str) -> str:
         return self.variant_to_standard.get(char, char)
@@ -82,12 +98,14 @@ class VariantCharMapper:
         return dict(result)
 
     def split_by_category(self, freq_dict: Dict[str, int]) -> Tuple[Dict[str, int], Dict[str, int]]:
+        mapped = self.map_frequency_dict(freq_dict)
         common = {}
         rare = {}
-        for char, count in freq_dict.items():
-            if self.is_common_char(char):
+        for char, count in mapped.items():
+            cat = self.standard_category.get(char, "未分类")
+            if cat == "通用字":
                 common[char] = count
-            elif self.is_rare_char(char):
+            elif cat == "生僻字":
                 rare[char] = count
         return common, rare
 

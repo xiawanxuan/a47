@@ -33,9 +33,66 @@ class ReportGenerator:
             self._write_frequency_sheet(writer)
             self._write_category_sheet(writer)
             self._write_top_chars_sheet(writer)
+            if self.counter.has_region_data():
+                self._write_region_summary_sheet(writer)
+                self._write_region_frequency_sheet(writer)
+                self._write_region_top_chars_sheet(writer)
             self._write_files_info_sheet(writer)
 
         return output_path
+
+    def _write_region_summary_sheet(self, writer: pd.ExcelWriter):
+        summary = self.counter.get_region_summary()
+        regions = self.counter.get_sorted_regions()
+
+        data = []
+        for r in regions:
+            s = summary[r]
+            data.append({
+                "省份": r,
+                "所属区域": s["area"],
+                "文件数量": s["file_count"],
+                "总字数": s["total_chars"],
+                "不重复字数": s["unique_chars"],
+                "通用字数量": s["common_count"],
+                "生僻字数量": s["rare_count"],
+            })
+
+        df = pd.DataFrame(data)
+        df.to_excel(writer, sheet_name="地域统计概览", index=False)
+
+        worksheet = writer.sheets["地域统计概览"]
+        for idx, col in enumerate(df.columns):
+            worksheet.column_dimensions[chr(65 + idx)].width = 15
+
+    def _write_region_frequency_sheet(self, writer: pd.ExcelWriter):
+        df = self.counter.to_region_dataframe()
+        df.to_excel(writer, sheet_name="地域字频明细", index=False)
+
+        worksheet = writer.sheets["地域字频明细"]
+        worksheet.column_dimensions["A"].width = 10
+
+    def _write_region_top_chars_sheet(self, writer: pd.ExcelWriter):
+        regions = self.counter.get_sorted_regions()
+        top_n = 50
+
+        all_data = []
+        for r in regions:
+            top_chars = self.counter.get_region_top_chars(r, top_n=top_n)
+            for i, (char, count) in enumerate(top_chars):
+                area = self.counter.region_area.get(r, "未知")
+                all_data.append({
+                    "省份": r,
+                    "所属区域": area,
+                    "排名": i + 1,
+                    "汉字": char,
+                    "频次": count,
+                    "类别": self.mapper.get_category(char),
+                })
+
+        if all_data:
+            df = pd.DataFrame(all_data)
+            df.to_excel(writer, sheet_name=f"各地Top{top_n}", index=False)
 
     def _write_summary_sheet(self, writer: pd.ExcelWriter):
         summary = self.counter.get_summary()
@@ -123,6 +180,7 @@ class ReportGenerator:
             for f in files:
                 all_files.append({
                     "朝代": dynasty,
+                    "出土地域": f.get("region", "未知"),
                     "文件名": f["filename"],
                     "总字数": f["total_chars"],
                     "不重复字数": f["unique_chars"],
@@ -232,9 +290,49 @@ class ReportGenerator:
             story.append(img)
             story.append(Spacer(1, 0.5 * cm))
 
+        if self.counter.has_region_data():
+            story.append(PageBreak())
+            story.append(Paragraph("四、地域维度统计", h2_style))
+
+            region_summary = self.counter.get_region_summary()
+            regions = self.counter.get_sorted_regions()
+
+            region_table_data = [["省份", "区域", "文件数", "总字数", "不重复字数", "通用字", "生僻字"]]
+            for r in regions:
+                s = region_summary[r]
+                region_table_data.append([
+                    r, s["area"], str(s["file_count"]),
+                    f"{s['total_chars']:,}",
+                    f"{s['unique_chars']:,}",
+                    f"{s['common_count']:,}",
+                    f"{s['rare_count']:,}",
+                ])
+
+            region_table = Table(region_table_data,
+                                 colWidths=[2 * cm, 1.5 * cm, 1.5 * cm,
+                                            2 * cm, 2.5 * cm, 2 * cm, 2 * cm])
+            region_table.setStyle(TableStyle([
+                ("FONTNAME", (0, 0), (-1, -1), "STSong-Light"),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgreen),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.gray),
+                ("ALIGN", (2, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ]))
+            story.append(region_table)
+            story.append(Spacer(1, 0.8 * cm))
+
+            region_dist_img = self.visualizer.plot_region_distribution()
+            if region_dist_img and os.path.exists(region_dist_img):
+                story.append(Paragraph("各省份出土古籍总字数分布", h2_style))
+                img = Image(region_dist_img, width=15 * cm, height=9 * cm)
+                story.append(img)
+                story.append(Spacer(1, 0.5 * cm))
+
+        next_section = 5 if not self.counter.has_region_data() else 6
         if target_chars:
             story.append(PageBreak())
-            story.append(Paragraph("四、重点汉字演变趋势", h2_style))
+            story.append(Paragraph(f"{next_section}、重点汉字演变趋势", h2_style))
 
             if len(target_chars) >= 2:
                 multi_img = self.visualizer.plot_multiple_chars_trend(target_chars)
@@ -251,8 +349,24 @@ class ReportGenerator:
                     story.append(img)
                     story.append(Spacer(1, 0.3 * cm))
 
+                if self.counter.has_region_data():
+                    combined_img = self.visualizer.plot_char_dynasty_region_combined(char)
+                    if combined_img and os.path.exists(combined_img):
+                        story.append(Paragraph(f"「{char}」字时序-地域联动分析", h2_style))
+                        img = Image(combined_img, width=15 * cm, height=7 * cm)
+                        story.append(img)
+                        story.append(Spacer(1, 0.3 * cm))
+
+                    heatmap_img = self.visualizer.plot_dynasty_region_heatmap(char)
+                    if heatmap_img and os.path.exists(heatmap_img):
+                        story.append(Paragraph(f"「{char}」字朝代×地域热力图", h2_style))
+                        img = Image(heatmap_img, width=15 * cm, height=9 * cm)
+                        story.append(img)
+                        story.append(Spacer(1, 0.3 * cm))
+
+        next_section = next_section + 1
         story.append(PageBreak())
-        story.append(Paragraph("五、各朝代高频字排行", h2_style))
+        story.append(Paragraph(f"{next_section}、各朝代高频字排行", h2_style))
 
         for i, dynasty in enumerate(dynasties):
             story.append(Paragraph(f"{dynasty}代高频字 Top 15", h2_style))
@@ -264,17 +378,37 @@ class ReportGenerator:
             if (i + 1) % 2 == 0 and i < len(dynasties) - 1:
                 story.append(PageBreak())
 
+        if self.counter.has_region_data():
+            story.append(PageBreak())
+            next_section += 1
+            story.append(Paragraph(f"{next_section}、各地域高频字排行", h2_style))
+            for i, region in enumerate(regions):
+                story.append(Paragraph(f"{region}出土古籍高频字 Top 15", h2_style))
+                top_img = self.visualizer.plot_region_top_chars(region, top_n=15)
+                if top_img and os.path.exists(top_img):
+                    img = Image(top_img, width=14 * cm, height=8.5 * cm)
+                    story.append(img)
+                    story.append(Spacer(1, 0.3 * cm))
+                if (i + 1) % 2 == 0 and i < len(regions) - 1:
+                    story.append(PageBreak())
+
+        next_section += 1
         story.append(PageBreak())
-        story.append(Paragraph("六、研究说明", h2_style))
-        story.append(Paragraph(
+        story.append(Paragraph(f"{next_section}、研究说明", h2_style))
+        study_text = (
             "本报告基于古籍文本批量处理系统生成，主要功能包括："
             "（1）古籍文本清洗与脱敏，去除标点、空白及破损字符；"
             "（2）异体字归一化映射，将异体字统一为标准字形；"
             "（3）按朝代分组统计字频，区分通用字与生僻字；"
             "（4）可视化展示汉字使用频率的历史演变规律。"
-            "本系统支持增量数据源追加，可随古籍数据库扩充重新计算。",
-            body_style
-        ))
+        )
+        if self.counter.has_region_data():
+            study_text += (
+                "（5）按出土地域分组统计，生成地域-字频热力图与时序-地域联动分析，"
+                "支持汉字使用的时空二维研究。"
+            )
+        study_text += "本系统支持增量数据源追加，可随古籍数据库扩充重新计算。"
+        story.append(Paragraph(study_text, body_style))
 
         doc.build(story)
 
@@ -311,6 +445,11 @@ class ReportGenerator:
             if cat_img:
                 self._pdf_image_page(pdf, cat_img, "通用字与生僻字对比")
 
+            if self.counter.has_region_data():
+                region_dist_img = self.visualizer.plot_region_distribution()
+                if region_dist_img:
+                    self._pdf_image_page(pdf, region_dist_img, "各省份出土古籍总字数分布")
+
             if target_chars and len(target_chars) >= 2:
                 multi_img = self.visualizer.plot_multiple_chars_trend(target_chars)
                 if multi_img:
@@ -322,11 +461,26 @@ class ReportGenerator:
                     if char_img:
                         self._pdf_image_page(pdf, char_img, f"「{char}」字使用频率演变")
 
+                    if self.counter.has_region_data():
+                        combined_img = self.visualizer.plot_char_dynasty_region_combined(char)
+                        if combined_img:
+                            self._pdf_image_page(pdf, combined_img, f"「{char}」字时序-地域联动")
+                        heatmap_img = self.visualizer.plot_dynasty_region_heatmap(char)
+                        if heatmap_img:
+                            self._pdf_image_page(pdf, heatmap_img, f"「{char}」字朝代×地域热力图")
+
             dynasties = self.counter.get_sorted_dynasties()
             for dynasty in dynasties:
                 top_img = self.visualizer.plot_dynasty_top_chars(dynasty, top_n=15)
                 if top_img:
                     self._pdf_image_page(pdf, top_img, f"{dynasty}代高频字 Top 15")
+
+            if self.counter.has_region_data():
+                regions = self.counter.get_sorted_regions()
+                for region in regions:
+                    top_img = self.visualizer.plot_region_top_chars(region, top_n=15)
+                    if top_img:
+                        self._pdf_image_page(pdf, top_img, f"{region}出土古籍高频字 Top 15")
 
     def _pdf_cover_page(self, pdf):
         fig = plt.figure(figsize=(8.27, 11.69))
